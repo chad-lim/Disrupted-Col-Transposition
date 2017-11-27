@@ -1,0 +1,69 @@
+Makeup Exercise 1: Disrupted Columnar Transposition
+CIS5362 Fall 2017
+
+Write a program that compiles and runs on storm.cise.ufl.edu. 
+It will encrypt and decrypt ASCII alphnumeric characters using the disrupted columnar transposition cipher. Recall that in this cipher, a keyword (which may have duplicate characters) is used to define 
+a) the number of columns, 
+b) the length of each row (for initial fill), and 
+c) the order in which columns are output.
+
+
+target name = discol
+Reads from stdin, writes to stdout. 
+Flags: -e for encrypt (default)
+	-d for decrypt
+	-k<string> for the key string (required)
+	-t to output the intermediate table to stderr
+	-b to backfill (default is not to backfill)
+	-<N> to output in groups of N characters (default is N=5)
+	-h for outputting a brief help message, describing the flags and program
+
+Description:
+Reads from stdin, writes to stdout. Non alpha-numeric characters are ignored
+(i.e., skip over white space, punctuation, and anything that is not an alphabetic character or decimal digit). 
+
+The Key
+The key string is an alphanumeric string, which must be converted to upper case, and then is used to assign an order to the columns. A-Z comes before 0-9, and the order is alphabetic and normal numeric order. The key may be all alpha, all numeric, or a mix. Duplicates are allowed, with the first instance (reading left to right) of a symbol taken to come before the second instance of that same symbbol. So, for example, if the key is given as AaAaA, then the order is 12345, or if the key is A1A, the order is 132. Any non-alphanumeric characters in the key should produce a warning to stderr and be ignored as a key character (i.e., continue to process the key as though the offending character were omitted). The maximum key length is 36. If a longer key is presented, output a warning to stderr and continue processing using the first 36 (valid) characters. 
+
+Cipher Array
+Based on the key, an array is defined with initial fill and backfill cells. If the key is of length k, the array has k columns and k+1 rows. Let L(i) be the ordinal for column i (let i run from 1 to k) as given by the key, with the ordinals running from 1 to k. Initial fill cells are defined by the length of each row, with L(i) the number of cells that are filled on the initial fill pass for row i, and for row 0, setting L(0) = k. 
+
+Encryption:
+Filtered input is converted to upper case, and used to fill the array as defined by disrupted transposition. That is, the plaintext is used to fill the initial fill cells of the array row by row, from left to right, top to bottom. Only the initial fill cells of a row are used during the initial fill stage, and not all of these may be filled if the plaintext is too short to do so. 
+
+If the -b flag is set, and there is more plaintext after the initial fill stage is complete (all the initial fill cells have been filled in all k+1 rows), then backfill commences. During backfill, the remainder of the cells in each row are filled, row by row, left to right, top to bottom, starting from the leftmose cell (if any) that is not an initial fill cell, and ending with the rightmost cell in the row. Again, if there is insufficient plaintext, not all backfill cells may be filled in the last rows.  If the -b flag is not present, then backfill is not done. 
+
+Once the array is filled (and perhaps backfilled), or there is no more plaintext left, the corresponding ciphertext is output. Ciphertext is the cells that are filled (either by initial fill or backfill) read out column by column, from top to bottom, in the column order as specified by the key. 
+
+If the -t flag is present, then output the array as filled, row by row, to stdout, starting with a row for the key, a row for the ordinals determined from the key, then with the rows of the array as filled (rows with unfilled cells will be shortened). 
+
+If there is more plaintext than one array will hold (depending on backfill), then fill an array and output it, then clear the array and fill it in the same manner with the following plaintext, processing the plaintext in blocks of a size determined by the key and the -b flag.
+
+Output in groups of 5 ciphertext characters (uppercase), followed by a space, with a newline after the 10th such group. If the -<N> flag is used (here, <N> means that the dash is followed by a decimal number between 0 and 50), then output groups of N consecutive ciphertext characters, followed by a space. After any group on a single line that makes the total number of characters output 60 or more, output a newline. After the last ciphertext character, also output a newline. If N=0, then do not output any spaces or newlines, just the ciphertext characters.
+
+Decryption:
+Input should be uppercase alphanumeric characters, and perhaps white space. Ignore white space characters, and output an error message to stderr and exit with an error code = 1 if there is a character that is neither whitespace nor alphanumeric (lower case is OK). 
+
+Use the key as in encryption to determine the array dimensions and row lengths, and hence the initial fill and backfill cells. Depending on the length of the plaintext and whether the -b flag is present, the code will determine how many filled cells each column has, then fill the columns in the order specified by the key, from top to bottom, only filling the cells that would be filled during encryption. Note that this means that some rows may be skipped when filling a column. 
+If the -t flag is present, then output the array as filled, row by row, to stdout, starting with a row for the key, a row for the ordinals determined from the key, then with the rows of the array as filled (rows with unfilled cells will be shortened). 
+
+Once the array is filled, then output the rows as lowercase alphabetic characters and numbers, row by row, left to right, top to bottom, in groups of N (with N=5 as the default), as is done with the ciphertext. 
+
+If there is more ciphertext than the array can hold, then process the ciphertext in blocks of a size that depends on the key and the -b flag, as done with encryption. 
+
+
+Submission:
+Submit 
+1) a makefile for all programs and support code that makes the executable discol when "make all" is typed
+2) all source code (header files, etc.)
+3) README.txt file that explains the environmental expectations of the code
+and lists any bugs
+4) Brief textual report Report_M1 in text, doc, docx, or PDF format that
+reflects on how you approached the problem and how you solved any challenges,
+and what you learned from the assignment.
+
+
+
+
+
+
