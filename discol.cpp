@@ -35,16 +35,17 @@ int main(int argc, char *argv[]){
 	makeAlphaNumeric(inputs);
 	toUpperCase(inputs);
 
+
 	// Runs through input arguments and gets the values for any flags
 	checkArgs(argv, argc,encrypt, decrypt, keyString, intermediateTable, backfill, N, help);
-
+	nonAlphaNumStdErr(inputs, decrypt);
 	/*
 	Checks for any non-alphanumeric characters and outputs them to stderr
 	After writing to stderr, remove non-alphanumeric characters
 	Then, change the remaining key string to all upper case
 	Finally, we ensure that the key is no greater than 36 characters as specified
 	*/
-	nonAlphaNumStdErr(keyString);
+	nonAlphaNumStdErr(keyString, false);
 	makeAlphaNumeric(keyString);
 	toUpperCase(keyString);
 	maxKeyLength(keyString);
@@ -59,14 +60,10 @@ int main(int argc, char *argv[]){
 	makePair(pear1, pear2, keyString, strSortedKey);
 
 	if(encrypt){
-		xEncrypt(matrix, pear1, pear2, keyString, strSortedKey, inputs);
+		xEncrypt(matrix, pear1, pear2, keyString, strSortedKey, inputs, intermediateTable, N, backfill);
 	}
 	else{
-
-	}
-
-	if(DEBUG){
-		std::cout << matrix.size() << " " << matrix[1].size() << std::endl;
+		xDecrypt(matrix, pear1, pear2, keyString, strSortedKey, inputs, intermediateTable, N, backfill);
 	}
 
 	if(DEBUG){
@@ -90,94 +87,319 @@ int main(int argc, char *argv[]){
 	}
 	return 0;
 }
-void xEncrypt(std::vector<std::vector<char> > &matrix, std::vector<std::pair<char, int> > pear1, std::vector<std::pair<char, int> > pear2, std::string &keyString, std::string &strSortedKey, std::string inputs){
+
+void xDecrypt(std::vector<std::vector<char> > &matrix, std::vector<std::pair<char, int> > pear1, std::vector<std::pair<char, int> > pear2, std::string &keyString, std::string &strSortedKey, std::string inputs, bool intermediateTable, int N, bool backfill){
 	int row = keyString.size()+1;
 	int column = keyString.size();
 	int counter = 0;
 
-	std::cout << "Size of inputs should be 26: " << inputs.size() << std::endl;
+	fillMatrixDecrypt(inputs, row ,column, counter, matrix, pear1, pear2);
+
+	if(backfill){
+		executeBackfill(matrix, row, column, inputs, counter);
+	}
+
+	if(intermediateTable){
+		intTable(row, column, matrix, pear1);
+	}
+
+	readOutDecrypt(matrix, row, column, N);
+}
+
+void xEncrypt(std::vector<std::vector<char> > &matrix, std::vector<std::pair<char, int> > pear1, std::vector<std::pair<char, int> > pear2, std::string &keyString, std::string &strSortedKey, std::string inputs, bool intermediateTable, int N, bool backfill){
+	int row = keyString.size()+1;
+	int column = keyString.size();
+	int counter = 0;
+
+	fillMatrixEncrypt(inputs, row ,column, counter, matrix, pear2);
+
+	// if(backfill){
+	// 	executeBackfill(matrix, row, column, inputs, counter);
+	// }
+
+	while (counter < inputs.size()){
+		fillMatrixEncrypt(inputs, row, column, counter, matrix, pear2);
+		if(backfill){
+			executeBackfill(matrix,row,column,inputs,counter);
+		}
+	}
+
+	if(intermediateTable){
+		intTable(row, column, matrix, pear1);
+	}
+
+	readOutEncrypt(matrix, pear2, row, column, N);
+
+}
+
+void executeBackfill(std::vector<std::vector<char> > &matrix, int row, int column, std::string inputs, int counter){
+	bool b = false;
+	if(inputs.size() > counter){
+		b = true;
+	}
+	if(b){
+		for(int i = 0; i < row; i++){
+			for(int j = 0; j < column; j++){
+				if(matrix[i][j] == ' ' && (counter != inputs.size())){
+					matrix[i][j] = inputs.at(counter);
+					counter++;
+				}
+			}
+		}
+	}
+}
+
+void fillMatrixDecrypt(std::string &inputs, int &row, int &column, int &counter, std::vector<std::vector<char> > &matrix, std::vector<std::pair<char, int> > &pear1, std::vector<std::pair<char, int> > &pear2){
 	for(int i = 0; i < row; i++){
 		if(i != 0){
-			for(int j = 0; j < pear2.at(i-1).second+1; j++){
+			for(int j = 0; j < column; j++){
+				if(j < pear2.at(i-1).second+1){
+					if(counter != inputs.size()){
+						matrix[i][j] = '*';
+					}
+					else{
+						matrix[i][j] = ' ';
+					}
+					if(counter+1 <= inputs.size()){
+						counter++;
+					}
+					else{
 
-				matrix[i][j] = inputs.at(counter);
-				//std::cout << matrix[i][j] << std::endl;
-				if(counter+1 <= inputs.size()){
-					std::cout << counter++ << std::endl;
+					}
+				}
+				else{
+					matrix[i][j] = ' ';
 				}
 			}
 		}
 		else{
 			for(int j = 0; j < column; j++){
-
-
-				matrix[i][j] = inputs.at(counter);
-				std::cout << matrix[i][j] << std::endl;
-
+				matrix[i][j] = '*';
 				counter++;
-
 			}
-			//std::cout << " End row " << i << std::endl;
+		}
+	}
+	counter = 0;
+	int temp = 0;
+	for(int i = 0; i < pear2.size(); i++){
+		temp = pear2.at(i).second;
+		//std::cout << column << std::endl;
+		for(int j = 0; j < row; j++){
+			if(matrix[j][temp] == '*'){
+				//std::cout << inputs.at(counter) << std::endl;
+				matrix[j][temp] = inputs.at(counter);
+				counter++;
+			}
+		}
+	}
+}
+
+void readOutEncrypt(std::vector<std::vector<char> > &matrix, std::vector<std::pair<char, int> > pear2, int row, int column, int N){
+	std::vector<char> output;
+	for(int i = 0; i < pear2.size(); i++){
+		column = pear2.at(i).second;
+		for(int j = 0; j < row; j++){
+			output.push_back(matrix[j][column]);
+		}
+	}
+	putchar('\n');
+
+	int counter = 0;
+	int tensCounter = 0;
+	for(int i = 0; i < output.size(); i++){
+		if(output.at(i) != ' '){
+			std::cout << output.at(i);
+			counter++;
+			if(N != 0){
+				if(counter == N){
+					if(N >= 60){
+						putchar('\n');
+					}
+					else{
+						std::cout << " ";
+						counter = 0;
+						tensCounter++;
+						if(tensCounter == 10){
+							putchar('\n');
+							tensCounter = 0;
+						}
+					}
+				}
+			}
+		}
+	}
+	putchar('\n');
+}
+
+void readOutDecrypt(std::vector<std::vector<char> > &matrix, int row, int column, int N){
+	std::vector<char> output;
+
+	std::string lowerCase;
+	//std::string temp;
+	char temp;
+
+	for(int i = 0; i < row; i++){
+		for(int j = 0; j < column;  j++){
+			temp = tolower(matrix[i][j]);
+			output.push_back(temp);
 		}
 	}
 
+	int counter = 0;
+	int tensCounter = 0;
 
-	std::cout << "\n2 | 3 | 4 | 6 | 1 | 5 |" << std::endl;
-	counter = 0;
-	// Print
-
-	for(int i = 0; i < row; i++){
-		//std::cout << "test" << matrix[0][5] << std::endl;
-		if(i != 0){
-			//	std::cout << i << " pear.at(i-1).second = " << pear2.at(i-1).second << std::endl;
-
-			for(int j = 0; j < pear2.at(i-1).second+1; j++){
-				//std::cout << "Counter: " << counter << std::endl;
-				//std::cout << i << " " << j << " test != 0 and != NULL " << std::endl;
-				std::cout << matrix[i][j] << " | ";
-				counter++;
-
+	for(int i = 0; i < output.size(); i++){
+		if(output.at(i) != ' '){
+			std::cout << output.at(i);
+			counter++;
+			if(N != 0){
+				if(counter == N){
+					if(N >= 60){
+						putchar('\n');
+					}
+					else{
+						std::cout << " ";
+						counter = 0;
+						tensCounter++;
+						if(tensCounter == 10){
+							putchar('\n');
+							tensCounter = 0;
+						}
+					}
+				}
 			}
 		}
-		else{
-			for(int j = 0; j < column; j++){
-				//std::cout << i << " " << j << " test == 0 and != NULL " << std::endl;
-				std::cout << matrix[i][j] << " | ";
-				counter++;
-			}
+	}
+	putchar('\n');
+
+}
+
+void intTable(int row, int column, std::vector<std::vector<char> > &matrix, std::vector<std::pair<char, int> > pear1){
+	// Output the key
+	for(int i = 0; i < pear1.size(); i++){
+		std::cout << pear1.at(i).first << " | ";
+	}
+	putchar('\n');
+
+	// Output key ordinals
+	for(int i = 0; i < pear1.size(); i++){
+		std::cout << pear1.at(i).second+1 << " | ";
+	}
+	putchar('\n');
+	for(int i = 0; i < row; i++){
+		for(int j = 0; j < column; j++){
+			std::cout << matrix[i][j] << " | ";
 		}
 		putchar('\n');
 	}
 }
 
+void fillMatrixEncrypt(std::string &inputs, int &row, int &column, int &counter, std::vector<std::vector<char> > &matrix, std::vector<std::pair<char, int> > &pear2){
+	for(int i = 0; i < row; i++){
+		if(i != 0){
+			for(int j = 0; j < column; j++){
+				if(j < pear2.at(i-1).second+1){
+					if(counter != inputs.size()){
+						matrix[i][j] = inputs.at(counter);
+					}
+					else{
+						matrix[i][j] = ' ';
+					}
+					if(counter+1 <= inputs.size()){
+						counter++;
+					}
+				}
+				else{
+					matrix[i][j] = ' ';
+				}
+			}
+		}
+		else{
+			for(int j = 0; j < column; j++){
+				matrix[i][j] = inputs.at(counter);
+				counter++;
+			}
+		}
+	}
+}
+
 void makePair(std::vector<std::pair<char, int> > &pear1, std::vector<std::pair<char, int> > &pear2, std::string &keyString, std::string &strSortedKey){
+
 	int order1 = 0;
 	int order2 = 0;
-	// Let's find the index of the sorted letter in the string instead
+
+	std::vector<char> keyStringFound;
+	std::vector<char> sortedKeyFound;
 
 
 	for(int i = 0; i < keyString.size(); i++){
-		order1 = strSortedKey.find(keyString.at(i));
-		order2 = keyString.find(strSortedKey.at(i));
-		//std::cout << strSortedKey.at(i) << " " << order2 <<std::endl;
-		//strSortedKey.erase(order+1, 1);
+
+		for(int j = 0; j < keyStringFound.size(); j++){
+
+			order1 = strSortedKey.find(keyString.at(i));
+
+			if(keyStringFound.size() != 0){
+
+				if(keyStringFound.at(j) == keyString.at(i)){
+					order1 += 1;
+				}
+				keyStringFound.push_back(keyString.at(i));
+			}
+
+		}
+		//order1 = strSortedKey.find(keyString.at(i));
+
+
+		for(int j = 0; j < sortedKeyFound.size(); j++){
+
+			order2 = keyString.find(strSortedKey.at(i));
+
+			if(sortedKeyFound.size() != 0){
+
+				if(sortedKeyFound.at(j) == strSortedKey.at(i)){
+					order2 += 1;
+				}
+				sortedKeyFound.push_back(strSortedKey.at(i));
+			}
+
+		}
+
+		//order2 = keyString.find(strSortedKey.at(i));
+
 
 		// TODO: PEAR1 IS FOR READING OUT THE COLUMNS
 		pear1.push_back(std::make_pair(keyString.at(i), order1));
 
+
 		// TODO: PEAR2 IS FOR MAKING THE MATRIX
 		pear2.push_back(std::make_pair(keyString.at(i), order2));
+
 	}
 
 }
 
 void sortKey(std::string &strSortedKey, std::string &keyString){
 	std::vector<char> sortedKey;
+	std::vector<char> forNumbers;
 
 	for(int i = 0; i < keyString.size(); i++){
-		sortedKey.push_back(keyString.at(i));
+		if(!(isalpha(keyString.at(i)))){
+			forNumbers.push_back(keyString.at(i));
+		}
+		else{
+			sortedKey.push_back(keyString.at(i));
+		}
 	}
+
+
+	std::sort(forNumbers.begin(), forNumbers.end());
+
 	std::sort(sortedKey.begin(), sortedKey.end());
+
+	for(int i = 0; i < forNumbers.size(); i++){
+		sortedKey.push_back(forNumbers.at(i));
+	}
+
 
 
 	std::string temp;
@@ -187,15 +409,12 @@ void sortKey(std::string &strSortedKey, std::string &keyString){
 		ss >> temp;
 		strSortedKey.append(temp);
 	}
-	std::cout << strSortedKey << std::endl;
 }
 
 void setMatrix(std::vector<std::vector<char>> &matrix, std::string keyString){
 	int height = keyString.size()+1;
 	int width = keyString.size();
 	// Set up sizes. (HEIGHT x WIDTH)
-	std::cout << "Matrix height: " << height << std::endl;
-	std::cout << "Matrix width: " << width << std::endl;
 	matrix.resize(height);
 	for (int i = 0; i < height; ++i){
 		matrix[i].resize(width);
@@ -214,10 +433,18 @@ void toUpperCase(std::string &keyString){
 	}
 }
 
-void nonAlphaNumStdErr(std::string &inputs){
+void nonAlphaNumStdErr(std::string &inputs, bool decrypt){
 	for(std::string::iterator i = inputs.begin(); i != inputs.end(); i++){
 		if(!isalnum(inputs.at(i - inputs.begin()))){
-			fprintf(stderr, "Error, character: [%c] is non-alphanumeric. Ignoring.\n", inputs.at(i-inputs.begin()));
+			if(decrypt){
+				fprintf(stderr, "Error, character: [%c] is non-alphanumeric. Exiting.\n", inputs.at(i-inputs.begin()));
+				exit(1);
+			}
+			else{
+				fprintf(stderr, "Error, character: [%c] is non-alphanumeric. Ignoring.\n", inputs.at(i-inputs.begin()));
+			}
+
+
 		}
 	}
 }
@@ -279,7 +506,9 @@ void select(std::string arguments, bool &encrypt, bool &decrypt, std::string &ke
 	}
 
 	if(arguments == "-h"){
-		help = true;
+		std::cout << "\nHELP SELECTED:\nDiscrupted Columnar Transposition Cipher"<< std::endl;
+		std::cout << "Please input a file through stdin, and begin execuation by using:"<< std::endl;
+		std::cout << "discol [-e | -d] -k<String> -t -b -<N> -h < somefile.txt" << std::endl;
 	}
 	// If the user gives a new value for n, take note of it
 	// Assumes input in the form -L<n>, with no space between L and n
