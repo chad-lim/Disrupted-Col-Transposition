@@ -38,6 +38,6 @@ void fillMatrixDecrypt(std::string &inputs, int &row, int &column, int &counter,
 void intTable(int row, int column, std::vector<std::vector<char> > &matrix, std::vector<std::pair<char, int> > pear1);
 void readOutEncrypt(std::vector<std::vector<char> > &matrix, std::vector<std::pair<char, int> > pear2, int row, int column, int N);
 void readOutDecrypt(std::vector<std::vector<char> > &matrix, int row, int column, int N);
-void executeBackfill(std::vector<std::vector<char> > &matrix, int row, int column, std::string inputs, int counter); 
+void executeBackfill(std::vector<std::vector<char> > &matrix, int row, int column, std::string inputs, int counter);
 
 #endif

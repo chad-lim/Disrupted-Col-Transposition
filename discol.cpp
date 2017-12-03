@@ -101,6 +101,7 @@ void xDecrypt(std::vector<std::vector<char> > &matrix, std::vector<std::pair<cha
 
 	if(intermediateTable){
 		intTable(row, column, matrix, pear1);
+		putchar('\n');
 	}
 
 	readOutDecrypt(matrix, row, column, N);
@@ -126,6 +127,7 @@ void xEncrypt(std::vector<std::vector<char> > &matrix, std::vector<std::pair<cha
 
 	if(intermediateTable){
 		intTable(row, column, matrix, pear1);
+		putchar('\n');
 	}
 
 	readOutEncrypt(matrix, pear2, row, column, N);
@@ -202,7 +204,7 @@ void readOutEncrypt(std::vector<std::vector<char> > &matrix, std::vector<std::pa
 			output.push_back(matrix[j][column]);
 		}
 	}
-	putchar('\n');
+
 
 	int counter = 0;
 	int tensCounter = 0;
@@ -270,7 +272,6 @@ void readOutDecrypt(std::vector<std::vector<char> > &matrix, int row, int column
 			}
 		}
 	}
-	putchar('\n');
 
 }
 
@@ -328,43 +329,13 @@ void makePair(std::vector<std::pair<char, int> > &pear1, std::vector<std::pair<c
 	int order1 = 0;
 	int order2 = 0;
 
-	std::vector<char> keyStringFound;
-	std::vector<char> sortedKeyFound;
-
-
 	for(int i = 0; i < keyString.size(); i++){
 
-		for(int j = 0; j < keyStringFound.size(); j++){
 
-			order1 = strSortedKey.find(keyString.at(i));
-
-			if(keyStringFound.size() != 0){
-
-				if(keyStringFound.at(j) == keyString.at(i)){
-					order1 += 1;
-				}
-				keyStringFound.push_back(keyString.at(i));
-			}
-
-		}
-		//order1 = strSortedKey.find(keyString.at(i));
+		order1 = strSortedKey.find(keyString.at(i));
 
 
-		for(int j = 0; j < sortedKeyFound.size(); j++){
-
-			order2 = keyString.find(strSortedKey.at(i));
-
-			if(sortedKeyFound.size() != 0){
-
-				if(sortedKeyFound.at(j) == strSortedKey.at(i)){
-					order2 += 1;
-				}
-				sortedKeyFound.push_back(strSortedKey.at(i));
-			}
-
-		}
-
-		//order2 = keyString.find(strSortedKey.at(i));
+		order2 = keyString.find(strSortedKey.at(i));
 
 
 		// TODO: PEAR1 IS FOR READING OUT THE COLUMNS
@@ -509,6 +480,7 @@ void select(std::string arguments, bool &encrypt, bool &decrypt, std::string &ke
 		std::cout << "\nHELP SELECTED:\nDiscrupted Columnar Transposition Cipher"<< std::endl;
 		std::cout << "Please input a file through stdin, and begin execuation by using:"<< std::endl;
 		std::cout << "discol [-e | -d] -k<String> -t -b -<N> -h < somefile.txt" << std::endl;
+		exit(EXIT_SUCCESS);
 	}
 	// If the user gives a new value for n, take note of it
 	// Assumes input in the form -L<n>, with no space between L and n
