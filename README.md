@@ -1,5 +1,8 @@
 ## Disrupted Columnar Transposition
 
+A short program written for CIS4362 - Intro to Cryptology for the Fall '17 semester at the University of Florida. 
+This is a funcitonal representation of a disrupted columnar transposition, and is capable of both encryption and decryption.
+
 ### Usage
 * Usage: 
 ```
